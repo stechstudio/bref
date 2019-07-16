@@ -390,6 +390,7 @@ RUN set -xe \
         --prefix=${INSTALL_DIR} \
         --enable-option-checking=fatal \
         --enable-maintainer-zts \
+        --enable-sockets \
         --with-config-file-path=${INSTALL_DIR}/etc/php \
         --with-config-file-scan-dir=${INSTALL_DIR}/etc/php/conf.d:/var/task/php/conf.d \
         --enable-fpm \
@@ -427,10 +428,6 @@ RUN set -xe; \
 RUN pecl install mongodb
 RUN pecl install redis
 RUN pecl install APCu
-
-RUN set -xe; \
-    curl -Ls https://elasticache-downloads.s3.amazonaws.com/ClusterClient/PHP-7.0/latest-64bit \
-  | tar xzC $(php-config --extension-dir) --strip-components=1
 
 ENV PTHREADS_BUILD_DIR=${BUILD_DIR}/pthreads
 

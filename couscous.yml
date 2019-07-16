@@ -54,6 +54,10 @@ menu:
                 url: /docs/local-development.html
     -   section: Environment
         items:
+            serverless-yml:
+                text: serverless.yml
+                url: /docs/environment/serverless-yml.html
+                title: Configure your application with the serverless.yml file
             variables:
                 text: Variables
                 url: /docs/environment/variables.html
@@ -70,6 +74,10 @@ menu:
                 text: Logs
                 url: /docs/environment/logs.html
                 title: Managing logs with Bref on AWS Lambda
+            database:
+                text: Databases
+                url: /docs/environment/database.html
+                title: Using a database from AWS Lambda
             custom-domains:
                 text: Custom domains
                 url: /docs/environment/custom-domains.html
