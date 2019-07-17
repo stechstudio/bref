@@ -24,6 +24,12 @@ ENV PKG_CONFIG_PATH="${INSTALL_DIR}/lib64/pkgconfig:${INSTALL_DIR}/lib/pkgconfig
     PATH="${INSTALL_DIR}/bin:${PATH}"
 
 
+# Install some dev files for using old libraries already on the system
+# readline-devel : needed for the --with-libedit flag
+# gettext-devel : needed for the --with-gettext flag
+# libicu-devel : needed for
+RUN LD_LIBRARY_PATH= yum install -y readline-devel gettext-devel libicu-devel
+
 ENV LD_LIBRARY_PATH="${INSTALL_DIR}/lib64:${INSTALL_DIR}/lib"
 
 # Ensure we have all the directories we require in the container.
@@ -50,7 +56,7 @@ RUN mkdir -p ${BUILD_DIR}  \
 #   - xml2
 ARG zlib
 ENV VERSION_ZLIB=${zlib}
-ENV ZLIB_BUILD_DIR=${BUILD_DIR}/xml2
+ENV ZLIB_BUILD_DIR=${BUILD_DIR}/zlib
 
 RUN set -xe; \
     mkdir -p ${ZLIB_BUILD_DIR}; \
@@ -74,6 +80,31 @@ RUN set -xe; \
 RUN set -xe; \
     make install \
  && rm ${INSTALL_DIR}/lib/libz.a
+
+
+ARG icu4c
+ENV VERSION_ICU4C=${icu4c}
+ENV ICU4C_BUILD_DIR=${BUILD_DIR}/icu4c
+
+RUN set -xe; \
+    mkdir -p ${ICU4C_BUILD_DIR}; \
+# Download and upack the source code
+    curl -Ls https://github.com/unicode-org/icu/releases/download/release-${VERSION_ICU4C//./-}/icu4c-${VERSION_ICU4C//./_}-src.tgz \
+  | tar xvz --directory=${ICU4C_BUILD_DIR} --strip-components=1
+
+# Move into the unpackaged code directory
+WORKDIR  ${ICU4C_BUILD_DIR}/source/
+
+# Configure the build
+RUN set -xe; \
+    CFLAGS="" \
+    CPPFLAGS="-I${INSTALL_DIR}/include  -I/usr/include" \
+    LDFLAGS="-L${INSTALL_DIR}/lib64 -L${INSTALL_DIR}/lib" \
+    ./configure \
+    --prefix=${INSTALL_DIR}
+
+RUN set -xe; \
+    make install
 
 ###############################################################################
 # OPENSSL Build
@@ -361,11 +392,6 @@ RUN set -xe; \
 # Move into the unpackaged code directory
 WORKDIR  ${PHP_BUILD_DIR}/
 
-# Install some dev files for using old libraries already on the system
-# readline-devel : needed for the --with-libedit flag
-# gettext-devel : needed for the --with-gettext flag
-# libicu-devel : needed for
-RUN LD_LIBRARY_PATH= yum install -y readline-devel gettext-devel libicu-devel
 
 # Configure the build
 # -fstack-protector-strong : Be paranoid about stack overflows
@@ -414,7 +440,6 @@ RUN set -xe \
         --enable-zip \
         --enable-bcmath \
         --with-pdo-pgsql=shared,${INSTALL_DIR} \
-        --enable-intl=shared \
         --enable-opcache-file \
         --enable-soap
 RUN make -j $(nproc)
